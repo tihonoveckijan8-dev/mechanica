@@ -1,366 +1,80 @@
-:root {
-    /* Основная палитра */
-    --primary: #3b82f6;
-    --primary-glow: rgba(59, 130, 246, 0.5);
-    --accent: #6366f1;
-    --text-dark: #0f172a;
-    --text-light: #475569;
-    --glass-bg: rgba(255, 255, 255, 0.65);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --surface-glass: rgba(255, 255, 255, 0.4);
+document.addEventListener('DOMContentLoaded', () => {
     
-    /* Состояния теста */
-    --success: #10b981;
-    --error: #ef4444;
-    --success-bg: rgba(16, 185, 129, 0.15);
-    --error-bg: rgba(239, 68, 68, 0.15);
+    // --- Configuration ---
+    const mainTabsContainer = document.getElementById('mainTabs');
+    const contentArea = document.querySelector('.content-area');
 
-    /* Тени и размытие */
-    --blur-strength: 20px;
-    --shadow-soft: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-    --shadow-hover: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
-}
+    // --- State Management ---
+    // Function to activate a subtab
+    function activateSubTab(subBtn) {
+        if (!subBtn) return;
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+        const parentContent = subBtn.closest('.tab-content');
+        const targetSubId = subBtn.dataset.sub;
+        const targetSubContent = document.getElementById(targetSubId);
 
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f0f4f8;
-    color: var(--text-dark);
-    line-height: 1.6;
-    min-height: 100vh;
-    overflow-x: hidden;
-    /* Градиентный фон для работы прозрачности */
-    background: radial-gradient(circle at top left, #eef2ff, #f0fdfa);
-}
+        // Deactivate siblings
+        parentContent.querySelectorAll('.subtab-button').forEach(b => b.classList.remove('active'));
+        parentContent.querySelectorAll('.subtab-content').forEach(c => c.classList.remove('active'));
 
-/* --- Анимированный фон (пятна) --- */
-.ambient-light {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(80px);
-    z-index: -1;
-    opacity: 0.6;
-    animation: float 10s infinite ease-in-out;
-}
-.one { width: 400px; height: 400px; background: #c7d2fe; top: -100px; left: -100px; }
-.two { width: 300px; height: 300px; background: #bfdbfe; bottom: -50px; right: -50px; animation-delay: -5s; }
+        // Activate target
+        subBtn.classList.add('active');
+        if (targetSubContent) {
+            targetSubContent.classList.add('active');
+        }
+    }
 
-@keyframes float {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(30px, 40px); }
-}
+    // Function to activate a main tab
+    function activateMainTab(tabBtn) {
+        const targetId = tabBtn.dataset.tab;
+        const targetContent = document.getElementById(targetId);
 
-/* --- Layout --- */
-.app-layout {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
+        if (!targetContent) return;
 
-/* --- Glass Header --- */
-.glass-header {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--blur-strength));
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 16px 24px;
-    margin-bottom: 24px;
-    box-shadow: var(--shadow-soft);
-}
+        // Visual updates for Tab Buttons
+        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+        tabBtn.classList.add('active');
 
-.header-inner {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+        // Scroll active tab into view (UX improvement for mobile)
+        tabBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
-.logo-area { display: flex; align-items: center; gap: 12px; }
-.logo-icon {
-    font-size: 28px;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
-.badge { font-size: 0.8rem; color: var(--text-light); background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 12px; }
+        // Hide all contents
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        // Show target content
+        targetContent.classList.add('active');
 
-/* --- Buttons --- */
-.btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 15px var(--primary-glow);
-}
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px var(--primary-glow); }
-.btn-secondary {
-    background: white;
-    color: var(--text-dark);
-    border: 1px solid #cbd5e1;
-    padding: 10px 20px;
-    border-radius: 14px;
-    font-weight: 500;
-    cursor: pointer;
-}
+        // Logic: Auto-select the first subtab if none is active
+        const firstSubBtn = targetContent.querySelector('.subtab-button');
+        const activeSubBtn = targetContent.querySelector('.subtab-button.active');
+        
+        if (!activeSubBtn && firstSubBtn) {
+            activateSubTab(firstSubBtn);
+        }
+    }
 
-/* --- Navigation --- */
-.glass-nav {
-    margin-bottom: 24px;
-    /* Mask for scroll fade */
-    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
-}
-.tabs-scroller {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    padding: 10px 20px;
-    scrollbar-width: none;
-}
-.tabs-scroller::-webkit-scrollbar { display: none; }
+    // --- Event Delegation (Performance) ---
 
-.tab-btn {
-    background: var(--surface-glass);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
-    padding: 10px 20px;
-    border-radius: 16px;
-    color: var(--text-light);
-    white-space: nowrap;
-    cursor: pointer;
-    transition: 0.2s;
-}
-.tab-btn.active {
-    background: white;
-    color: var(--primary);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    font-weight: 600;
-}
+    // 1. Handle Main Tab Clicks
+    mainTabsContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tab-button');
+        if (btn) {
+            activateMainTab(btn);
+        }
+    });
 
-/* --- Main Content --- */
-.glass-content {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--blur-strength));
-    border: 1px solid var(--glass-border);
-    border-radius: 32px;
-    padding: 32px;
-    min-height: 500px;
-    box-shadow: var(--shadow-soft);
-}
+    // 2. Handle Sub Tab Clicks (inside the content area)
+    contentArea.addEventListener('click', (e) => {
+        const btn = e.target.closest('.subtab-button');
+        if (btn) {
+            activateSubTab(btn);
+        }
+    });
 
-.tab-pane, .subtab-pane { display: none; }
-.tab-pane.active, .subtab-pane.active { display: block; }
-
-/* Subtabs */
-.subtabs-wrapper {
-    display: flex;
-    gap: 8px;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
-    padding-bottom: 16px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-}
-.subtab-btn {
-    background: transparent;
-    border: none;
-    padding: 6px 14px;
-    border-radius: 20px;
-    color: var(--text-light);
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: 0.2s;
-}
-.subtab-btn:hover { background: rgba(0,0,0,0.05); }
-.subtab-btn.active { background: var(--text-dark); color: white; }
-
-/* --- Typography & Elements --- */
-.topic-block { margin-bottom: 40px; animation: slideUp 0.4s ease-out; }
-h2 { font-size: 1.8rem; margin-bottom: 16px; color: #1e293b; }
-h3 { font-size: 1.4rem; margin-bottom: 12px; color: #334155; }
-.lead-text { font-size: 1.1rem; color: #334155; margin-bottom: 20px; }
-
-/* Cards inside content */
-.info-card, .data-box {
-    background: rgba(255,255,255,0.6);
-    border: 1px solid white;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    display: flex;
-    gap: 16px;
-}
-.card-icon { font-size: 24px; background: #e0e7ff; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
-
-/* Lists */
-.styled-list li {
-    list-style: none;
-    padding-left: 24px;
-    position: relative;
-    margin-bottom: 12px;
-}
-.styled-list li::before {
-    content: "•";
-    color: var(--primary);
-    position: absolute;
-    left: 0;
-    font-weight: bold;
-    font-size: 1.2rem;
-}
-
-/* Math */
-.code-block, .formula-card {
-    background: #f8fafc;
-    border-radius: 12px;
-    padding: 16px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.9rem;
-    margin: 12px 0;
-    border-left: 4px solid var(--accent);
-}
-.label {
-    display: block;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: #94a3b8;
-    margin-bottom: 4px;
-}
-
-/* Laws */
-.law-card {
-    display: flex;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 16px;
-    background: white;
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-}
-.law-num {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #cbd5e1;
-    line-height: 1;
-}
-
-.citation {
-    text-align: right;
-    font-size: 0.8rem;
-    color: #94a3b8;
-    margin-top: 24px;
-    font-style: italic;
-    border-top: 1px dashed rgba(0,0,0,0.1);
-    padding-top: 8px;
-}
-
-/* --- QUIZ STYLES --- */
-.quiz-modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.4); /* Dim background */
-    backdrop-filter: blur(8px);
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: 0.3s;
-}
-.quiz-modal.visible { opacity: 1; visibility: visible; }
-.hidden { display: none !important; }
-
-.quiz-container {
-    width: 90%; max-width: 600px;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 24px;
-    padding: 30px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-    position: relative;
-    transform: scale(0.95);
-    transition: 0.3s;
-}
-.quiz-modal.visible .quiz-container { transform: scale(1); }
-
-.quiz-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-}
-.close-btn { background: none; border: none; font-size: 2rem; cursor: pointer; color: #64748b; }
-
-.progress-bar {
-    height: 6px; background: #e2e8f0; border-radius: 3px; margin-bottom: 20px; overflow: hidden;
-}
-.progress-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.3s; }
-
-.question-box h4 { font-size: 1.2rem; margin: 10px 0 20px; }
-.q-number { font-size: 0.85rem; color: var(--accent); font-weight: 600; text-transform: uppercase; }
-
-.option-btn {
-    width: 100%;
-    text-align: left;
-    padding: 16px;
-    margin-bottom: 10px;
-    border: 2px solid transparent;
-    background: #f1f5f9;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: 0.2s;
-    color: var(--text-dark);
-}
-.option-btn:hover { background: #e2e8f0; }
-
-/* Quiz Feedback States */
-.option-btn.correct {
-    background: var(--success-bg);
-    border-color: var(--success);
-    color: #065f46;
-}
-.option-btn.wrong {
-    background: var(--error-bg);
-    border-color: var(--error);
-    color: #991b1b;
-}
-.option-btn.disabled { pointer-events: none; opacity: 0.8; }
-
-/* Quiz Results */
-.quiz-result { text-align: center; padding: 20px 0; }
-.score-circle {
-    width: 120px; height: 120px;
-    border-radius: 50%;
-    border: 6px solid var(--primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 20px;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--primary);
-}
-.result-actions { display: flex; gap: 12px; justify-content: center; margin-top: 24px; }
-
-/* Animations */
-@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.fade-in { animation: slideUp 0.3s ease-out; }
-
-/* Mobile */
-@media (max-width: 768px) {
-    .glass-header { padding: 12px; flex-direction: column; gap: 12px; align-items: stretch; }
-    .header-inner { flex-direction: column; gap: 12px; }
-    .btn-primary { justify-content: center; }
-    .glass-content { padding: 20px; }
-    h2 { font-size: 1.5rem; }
-    .grid-2 { grid-template-columns: 1fr; }
-}
+    // --- Initialization ---
+    // Ensure the default active tab behaves correctly on load
+    const initialActiveTab = document.querySelector('.tab-button.active');
+    if (initialActiveTab) {
+        activateMainTab(initialActiveTab);
+    }
+});
